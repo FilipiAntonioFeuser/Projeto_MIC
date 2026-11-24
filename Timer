@@ -1,0 +1,9 @@
+void timer(){
+  if (troca == true){
+      tempo--;
+      troca = false;
+      lcd.setCursor(14, 0);
+      lcd.print(tempo);
+      lcd.print(" ");
+    }
+  }
