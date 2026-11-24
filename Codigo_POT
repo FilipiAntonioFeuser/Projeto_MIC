@@ -1,1 +1,121 @@
 
+// MÓDULO: POTENCIÔMETRO COM FAIXAS (registradores AVR)
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
+#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
+
+// Variáveis globais definidas no arquivo principal (.ino) da máquina de estados
+extern bool vitoria;
+extern int erros;
+
+const uint8_t CANAL_ADC = 3;                // A3 = ADC3 (PC3)
+const int NUM_FAIXAS    = 8;                // menos faixas = mais fácil
+const int FAIXA_ALVO    = 5;                // faixa certa (0 até NUM_FAIXAS-1)
+const unsigned long TEMPO_SEGURAR = 1000;   // ms na faixa certa
+
+const int LARGURA_FAIXA = 1024 / NUM_FAIXAS;  // 128 com 8 faixas
+const int HISTERESE     = 12;                 // margem em unidades do ADC
+
+// Variáveis internas do módulo
+bool naFaixa = false;
+unsigned long inicioAcerto = 0;
+int faixaAnterior = -1;
+int faixaAtual = -1;
+
+// Base de tempo (substitui millis)
+volatile unsigned long msContador = 0;
+
+ISR(TIMER2_COMPA_vect) {
+  msContador++;
+}
+
+unsigned long agora() {
+  uint8_t sreg = SREG;   // leitura atômica de 32 bits no AVR
+  cli();
+  unsigned long t = msContador;
+  SREG = sreg;
+  return t;
+}
+
+// Leitura do ADC 
+int lerADC() {
+  ADCSRA |= (1 << ADSC);              // inicia conversão
+  while (ADCSRA & (1 << ADSC)) { }    // aguarda terminar
+  return ADC;                         // 0 a 1023
+}
+
+int lerPotSuave() {
+  long soma = 0;
+  for (int i = 0; i < 8; i++) {
+    soma += lerADC();
+  }
+  return soma / 8;
+}
+
+// Chamar uma vez no setup() principal
+void configurarPotenciometro() {
+  set_bit(DDRB, PB5);   // D13 (LED de fase concluída) como saída
+  clr_bit(DDRC, PC3);   // garante A3 como entrada
+  clr_bit(PORTC, PC3);  // garante pull-up desligado no A3
+
+  // Configura ADC: referência AVcc, canal A3, prescaler 128 (125 kHz)
+  ADMUX  = (1 << REFS0) | (CANAL_ADC & 0x07);
+  ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+  DIDR0 |= (1 << ADC3D);  // desliga buffer digital apenas do A3 (não afeta A0-A2)
+
+  // Configura Timer2 em modo CTC para gerar 1 ms (16 MHz / 128 = 125 kHz -> OCR2A = 124)
+  TCCR2A = (1 << WGM21);
+  TCCR2B = (1 << CS22) | (1 << CS20);
+  OCR2A  = 124;
+  TCNT2  = 0;
+  TIMSK2 = (1 << OCIE2A);
+  sei();
+}
+
+// Chamar na transição de entrada para esta fase
+void iniciarFasePotenciometro() {
+  vitoria = false;
+  naFaixa = false;
+  inicioAcerto = 0;
+  faixaAnterior = -1;
+  faixaAtual = -1;
+
+  clr_bit(PORTB, PB5);  // apaga LED da placa ao iniciar a fase
+  Serial.println("Fase Potenciometro iniciada!");
+}
+
+// Chamar continuamente dentro do estado da fase no loop()
+void atualizarPotenciometro() {
+  if (vitoria) return;
+
+  int leitura = lerPotSuave();  // 0 a 1023
+
+  // Recalcula a faixa apenas se sair da faixa atual + margem de histerese
+  int limiteInf = faixaAtual * LARGURA_FAIXA - HISTERESE;
+  int limiteSup = (faixaAtual + 1) * LARGURA_FAIXA + HISTERESE;
+
+  if (faixaAtual == -1 || leitura < limiteInf || leitura >= limiteSup) {
+    faixaAtual = (long)leitura * NUM_FAIXAS / 1024;
+  }
+
+  if (faixaAtual != faixaAnterior) {
+    Serial.print("Faixa atual: ");
+    Serial.println(faixaAtual);
+    faixaAnterior = faixaAtual;
+  }
+
+  if (faixaAtual == FAIXA_ALVO) {
+    if (!naFaixa) {
+      naFaixa = true;
+      inicioAcerto = agora();
+    } else if (agora() - inicioAcerto >= TEMPO_SEGURAR) {
+      vitoria = true;
+      set_bit(PORTB, PB5);
+      Serial.println("Potenciometro calibrado! Fase concluida.");
+    }
+  } else {
+    naFaixa = false;
+  }
+}
