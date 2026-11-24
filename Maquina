@@ -7,22 +7,22 @@ if (estado == 0){  // Menu principal
   if (senha == '1'){
     estado = 1;
     }
-  if (senha == '7355608'){  // Easter Egg CSGO
-    lcd.print("bah");
+  if (senha == "7355608"){  // Easter Egg CSGO
+    lcd.print("bingo bango bongo bish bash bosh");
     }
   }
 
 if (estado == 1){ // Escolha dificuldade
   dificuldade();
   if (senha == '1'){
-    dificildade = 1;
+    dificuldade = 1;
     tempo = 90;
     estado = 2;
     }
   if (senha == '2'){  
     dificuldade = 2;
     tempo = 60;
-    estado = 2;
+    estado = 4;
     }
   }
 
@@ -31,30 +31,42 @@ if (estado == 2){  //Puzzle NFC
     if (vitoria == true){
       estado = 3;
       tempo += 25;
+      vitoria = false;
     }
   }
 
 if (estado == 3){  //Puzzle Decode
     decode();
-    if (vitoria == true){
-      estado = 3;
+    if (vitoria == true && dificuldade == 1){
+      estado = 4;
       tempo += 25;
+      vitoria = false;
+    }
+    if (vitoria == true && dificuldade == 2){
+      estado = 6;
+      vitoria = false;
     }
   }
 
 if (estado == 4){  //Puzzle Fio
     fio();
-    if (vitoria == true){
-      estado = 3;
+    if (vitoria == true && dificuldade == 1){
+      estado = 6;
+      vitoria = false;
+    }
+    if (vitoria == true && dificuldade == 2){
+      estado = 5;
       tempo += 25;
+      vitoria = false;
     }
   }
 
 if (estado == 5){  //Puzzle Potenciometro
     Potenciometro();
     if (vitoria == true){
-      estado = 3;
+      estado = 2;
       tempo += 25;
+      vitoria = false;
     }
   }
 
