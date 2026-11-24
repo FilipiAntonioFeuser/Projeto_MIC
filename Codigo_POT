@@ -119,3 +119,20 @@ void atualizarPotenciometro() {
     naFaixa = false;
   }
 }
+void Potenciometro() {
+  static bool faseAtiva = false;
+  static unsigned long ultimaChamada = 0;
+
+  // Se acabou de entrar na fase OU se ficou mais de 500ms fora dela (ex: perdeu e reiniciou)
+  if (!faseAtiva || (agora() - ultimaChamada > 500)) {
+    iniciarFasePotenciometro();  // zera vitoria = false e reseta faixas/tempo
+    faseAtiva = true;
+  }
+  ultimaChamada = agora();
+
+  atualizarPotenciometro();
+
+  if (vitoria) {
+    faseAtiva = false;
+  }
+}
