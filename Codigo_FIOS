@@ -64,6 +64,16 @@ void iniciarFaseFios() {
   clr_bit(PORTB, PB5);    // apaga LEDs da fase
   clr_bit(PORTB, PB4);
 
+  // Escreve a dica uma única vez ao entrar na fase
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("O primeiro sera");
+  lcd.setCursor(0, 1);
+  lcd.print("a salvacao.");
+
+  Serial.print("Fase Fios iniciada (A2 A1 A0): ");
+  imprimirFios(estado_anterior);
+
   Serial.print("Fase Fios iniciada (A2 A1 A0): ");
   imprimirFios(estado_anterior);
 }
