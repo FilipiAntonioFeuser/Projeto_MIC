@@ -1,3 +1,18 @@
+// Variaveis Globais
+long codigo;
+String binario = "";
+String hexadecimal = "";
+String senha = "";
+bool confirma = false;
+
+void setup(){
+// Gera numero a ser decodificado
+randomSeed(analogRead(A0)); 
+codigo = random(1, 101);
+binario = String(codigo, BIN);
+hexadecimal = String(codigo, HEX);
+}
+
 void decode() {
   if (confirma == true) {
     lcd.setCursor(0, 1);
