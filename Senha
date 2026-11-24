@@ -1,0 +1,24 @@
+void registrar() {
+  char key = keypad.getKey();
+  
+  if (key) {
+    if (key == '#') {
+      confirma = true;
+    } 
+    else if (key == '*') {
+
+      senha = "";
+      confirma = false;
+      lcd.setCursor(0, 1);
+      lcd.print("                ");
+    } 
+    else {
+      if (!confirma) {
+        senha = senha + key;
+        Serial.println(senha);
+        lcd.setCursor(0, 1);
+        lcd.print(senha);
+      }
+    }
+  }
+}
