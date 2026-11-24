@@ -11,8 +11,8 @@
 #define FIOS_ERRADOS  ((1 << 1) | (1 << 2))  // A1 (PC1) e A2 (PC2)
 
 // Variáveis globais compartilhadas com a máquina de estados
-bool vitoria = false;
-int erros = 0;
+extern bool vitoria;
+extern int erros;
 
 // Variáveis internas do módulo
 volatile uint8_t estado_anterior = 0;
