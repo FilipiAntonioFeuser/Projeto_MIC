@@ -15,6 +15,7 @@ extern LiquidCrystal_I2C lcd;
 const uint8_t CANAL_ADC = 3;                // A3 = ADC3 (PC3)
 const int NUM_FAIXAS    = 8;                // menos faixas = mais fácil
 const int FAIXA_ALVO    = 5;                // faixa certa (0 até NUM_FAIXAS-1)
+const int FAIXA_PERIGO  = 7;                // faixa perigo 
 const unsigned long TEMPO_SEGURAR = 1000;   // ms na faixa certa
 
 const int LARGURA_FAIXA = 1024 / NUM_FAIXAS;  // 128 com 8 faixas
@@ -25,6 +26,7 @@ bool naFaixa = false;
 unsigned long inicioAcerto = 0;
 int faixaAnterior = -1;
 int faixaAtual = -1;
+bool emPerigo = false;
 
 // Base de tempo (substitui millis)
 volatile unsigned long msContador = 0;
@@ -59,8 +61,8 @@ int lerPotSuave() {
 // Chamar uma vez no setup() principal
 void configurarPotenciometro() {
   set_bit(DDRB, PB5);   // D13 (LED de fase concluída) como saída
+  set_bit(DDRB, PB4);   // ADICIONE: D12 (LED de erro) como saída
   clr_bit(DDRC, PC3);   // garante A3 como entrada
-  clr_bit(PORTC, PC3);  // garante pull-up desligado no A3
 
   // Configura ADC: referência AVcc, canal A3, prescaler 128 (125 kHz)
   ADMUX  = (1 << REFS0) | (CANAL_ADC & 0x07);
@@ -80,12 +82,19 @@ void configurarPotenciometro() {
 void iniciarFasePotenciometro() {
   vitoria = false;
   naFaixa = false;
+  emPerigo = false;     // ADICIONE: reseta a trava de erro ao iniciar
   inicioAcerto = 0;
   faixaAnterior = -1;
   faixaAtual = -1;
 
   clr_bit(PORTB, PB5);  // apaga LED da placa ao iniciar a fase
-  Serial.println("Fase Potenciometro iniciada!");
+  clr_bit(PORTB, PB4);  // ADICIONE: apaga LED de erro ao iniciar
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Alvo:101b 7=BOOM"); // ALTERE esta linha (avisa que 7 explode)
+  lcd.setCursor(0, 1);
+  lcd.print("Faixa: -/7 (1s)");
 }
 
 // Chamar continuamente dentro do estado da fase no loop()
@@ -105,13 +114,37 @@ void atualizarPotenciometro() {
   if (faixaAtual != faixaAnterior) {
     Serial.print("Faixa atual: ");
     Serial.println(faixaAtual);
+
+    lcd.setCursor(0, 1);
+    lcd.print("Faixa: ");
+    lcd.print(faixaAtual);
+    lcd.print("/7 (1s) ");
+
     faixaAnterior = faixaAtual;
   }
 
+  // Punição ao encostar no limite máximo (faixa 7)
+  if (faixaAtual == FAIXA_PERIGO) {
+    if (!emPerigo) {
+      emPerigo = true;
+      erros++;
+      set_bit(PORTB, PB4);
+      lcd.setCursor(0, 1);
+      lcd.print("SOBRECARGA! +1  ");
+      Serial.println("Sobrecarga na faixa 7! Erro +1");
+    }
+  } else {
+    emPerigo = false;
+  }
+
+  // Vitória ao segurar na faixa 5 por 1 segundo
   if (faixaAtual == FAIXA_ALVO) {
     if (!naFaixa) {
       naFaixa = true;
       inicioAcerto = agora();
+
+      lcd.setCursor(0, 1);
+      lcd.print("Travando... 1s  ");
     } else if (agora() - inicioAcerto >= TEMPO_SEGURAR) {
       vitoria = true;
       set_bit(PORTB, PB5);
