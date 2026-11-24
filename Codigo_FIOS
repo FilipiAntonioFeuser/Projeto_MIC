@@ -14,6 +14,7 @@
 // Variáveis globais compartilhadas com a máquina de estados
 extern bool vitoria;
 extern int erros;
+extern LiquidCrystal_I2C lcd;
 
 // Variáveis internas do módulo
 volatile uint8_t estado_anterior = 0;
