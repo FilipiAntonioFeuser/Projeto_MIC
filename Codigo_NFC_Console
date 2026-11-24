@@ -1,0 +1,191 @@
+#include <avr/io.h>
+#include <stdint.h>
+#include <SPI.h>
+#include <MFRC522.h>
+
+// 1. CONFIGURACAO DOS PINOS
+
+// RC522
+#define RFID_SS   10
+#define RFID_RST  A0
+
+MFRC522 leitor(RFID_SS, RFID_RST);
+
+
+// 2. CADASTRO DO CARTAO AUTORIZADO
+
+
+const uint8_t UID_CORRETO[] = {
+  0xCB, 0x8F, 0x70, 0x26
+};
+
+const uint8_t TAM_UID_CORRETO = sizeof(UID_CORRETO);
+
+
+// 3. CONFIGURACAO DA UART
+
+
+void uart_iniciar() {
+
+  // Configura 9600 baud para clock de 16 MHz
+  UBRR0H = 0;
+  UBRR0L = 103;
+
+  // Velocidade normal
+  UCSR0A = 0;
+
+  // Habilita transmissor
+  UCSR0B = (1 << TXEN0);
+
+  // 8 bits, sem paridade, 1 stop bit
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+}
+
+
+// Envia um caractere pela UART
+void uart_enviar(char caractere) {
+
+  while (!(UCSR0A & (1 << UDRE0)));
+
+  UDR0 = caractere;
+}
+
+
+// Envia uma string pela UART
+void uart_texto(const char *texto) {
+
+  while (*texto) {
+
+    uart_enviar(*texto);
+    texto++;
+  }
+}
+
+
+// Converte um byte para hexadecimal e envia
+void uart_hex(uint8_t valor) {
+
+  const char digitos[] = "0123456789ABCDEF";
+
+  uart_enviar(digitos[(valor >> 4) & 0x0F]);
+  uart_enviar(digitos[valor & 0x0F]);
+}
+
+
+// 4. EXIBICAO DO UID
+
+
+void mostrar_uid() {
+
+  uart_texto("\r\nCartao detectado!\r\n");
+  uart_texto("UID: ");    // APENAS PARA FASE DE TESTE (REMOVER DEPOIS)
+
+  for (uint8_t i = 0; i < leitor.uid.size; i++) {
+
+    uart_hex(leitor.uid.uidByte[i]);
+    uart_enviar(' ');
+  }
+
+  uart_texto("\r\n");
+
+  uart_texto("Tamanho: ");
+  uart_enviar('0' + leitor.uid.size);
+  uart_texto(" bytes\r\n");
+}
+
+
+// 5. VALIDACAO DO CARTAO
+
+bool cartao_correto() {
+
+  // Verifica se o tamanho do UID corresponde
+  if (leitor.uid.size != TAM_UID_CORRETO) {
+
+    return false;
+  }
+
+  // Compara cada byte do UID
+  for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
+
+    if (leitor.uid.uidByte[i] != UID_CORRETO[i]) {
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+// 6. SETUP
+
+
+void setup() {
+
+  // Inicializa comunicacao serial
+  uart_iniciar();
+
+  uart_texto("\r\n================================\r\n");
+  uart_texto("       SISTEMA ESCAPE ROOM       \r\n");
+  uart_texto("================================\r\n");
+
+  // Inicializa comunicacao SPI
+  SPI.begin();
+
+  // Inicializa leitor RFID
+  leitor.PCD_Init();
+
+  uart_texto("Leitor RC522 inicializado!\r\n");
+  uart_texto("Aguardando cartao...\r\n");
+}
+
+
+// 7. LOOP PRINCIPAL
+
+
+void loop() {
+
+  // Verifica se existe um novo cartao
+  if (!leitor.PICC_IsNewCardPresent()) {
+
+    return;
+  }
+
+  // Realiza a leitura do UID
+  if (!leitor.PICC_ReadCardSerial()) {
+
+    return;
+  }
+
+  // Exibe o UID identificado
+  mostrar_uid();
+
+
+  // Verifica se o cartao esta autorizado
+  if (cartao_correto()) {
+
+    uart_texto("\r\n");
+    uart_texto("********************************\r\n");
+    uart_texto("       CARTAO CORRETO!          \r\n");
+    uart_texto("       ACESSO AUTORIZADO        \r\n");
+    uart_texto("********************************\r\n");
+
+  }
+
+  else {
+
+    uart_texto("\r\n");
+    uart_texto("********************************\r\n");
+    uart_texto("       CARTAO INCORRETO!        \r\n");
+    uart_texto("       ACESSO NEGADO            \r\n");
+    uart_texto("********************************\r\n");
+
+  }
+
+
+  // Encerra comunicacao com o cartao
+  leitor.PICC_HaltA();
+
+  leitor.PCD_StopCrypto1();
+
+}
