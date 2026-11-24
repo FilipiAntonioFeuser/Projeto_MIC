@@ -2,6 +2,7 @@
 // MÓDULO: POTENCIÔMETRO COM FAIXAS (registradores AVR)
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <LiquidCrystal_I2C.h>
 
 #define set_bit(reg, bit) ((reg) |= (1 << (bit)))
 #define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
@@ -9,6 +10,7 @@
 // Variáveis globais definidas no arquivo principal (.ino) da máquina de estados
 extern bool vitoria;
 extern int erros;
+extern LiquidCrystal_I2C lcd;
 
 const uint8_t CANAL_ADC = 3;                // A3 = ADC3 (PC3)
 const int NUM_FAIXAS    = 8;                // menos faixas = mais fácil
