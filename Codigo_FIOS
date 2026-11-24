@@ -1,7 +1,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <LiquidCrystal.h> // ou <LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C.h>
 
 #define set_bit(reg, bit) ((reg) |= (1 << (bit)))
 #define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
