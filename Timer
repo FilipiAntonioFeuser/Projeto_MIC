@@ -1,4 +1,14 @@
-void timer(){
+ISR(TIMER1_COMPA_vect) {  //Interrupção necessária para o timer
+  static int contador = 0;
+  contador++;
+  
+  if (contador >= 1000) {
+    contador = 0;
+    troca = true;
+  }
+ }
+
+void timer(){   //Função Timer
   if (troca == true){
       tempo--;
       troca = false;
