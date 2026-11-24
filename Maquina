@@ -4,7 +4,7 @@ int erros = 0;
 void maquina_estados(){
 if (estado == 0){  // Menu principal
   menu();
-  if (senha == '1'){
+  if (senha == "1"){
     estado = 1;
     }
   if (senha == "7355608"){  // Easter Egg CSGO
@@ -13,16 +13,18 @@ if (estado == 0){  // Menu principal
   }
 
 if (estado == 1){ // Escolha dificuldade
-  lcd.print("Escolha dificuldade";
-  if (senha == '1'){
+  lcd.print("Escolha dificuldade");
+  if (senha == "1"){
     dificuldade = 1;
     tempo = 90;
     estado = 2;
+    senha = "";
     }
-  if (senha == '2'){  
+  if (senha == "2"){  
     dificuldade = 2;
     tempo = 60;
     estado = 4;
+    senha = "";
     }
   }
 
@@ -72,9 +74,10 @@ if (estado == 5){  //Puzzle Potenciometro
 
 if (estado == 6){  //Vitoria
     lcd.print("Parabens but");
-    if (senha == '1'){
+    if (senha == "1"){
       estado = 0;
       erros = 0;
+      senha = "";
     }
   }
 
@@ -82,18 +85,20 @@ if (estado == 6){  //Vitoria
 if (erros >= 3 && dificuldade == 1){  //Derrota facil
   tempo = 0;
   lcd.print("derrota humilhante but");
-  if (senha == '1'){
+  if (senha == "1"){
       estado = 0;
       erros = 0;
+      senha = "";
     }
   }
 
 if (erros >= 2 && dificuldade == 2){  //Derrota dificil
   tempo = 0;
   lcd.print("derrota");
-  if (senha == '1'){
+  if (senha == "1"){
       estado = 0;
       erros = 0;
+      senha = "";
     }
   }
 }
