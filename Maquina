@@ -1,0 +1,85 @@
+bool vitoria = false;
+int erros = 0;
+
+void maquina_estados(){
+if (estado == 0){  // Menu principal
+  menu();
+  if (senha == '1'){
+    estado = 1;
+    }
+  if (senha == '7355608'){  // Easter Egg CSGO
+    lcd.print("bah");
+    }
+  }
+
+if (estado == 1){ // Escolha dificuldade
+  dificuldade();
+  if (senha == '1'){
+    dificildade = 1;
+    tempo = 90;
+    estado = 2;
+    }
+  if (senha == '2'){  
+    dificuldade = 2;
+    tempo = 60;
+    estado = 2;
+    }
+  }
+
+if (estado == 2){  //Puzzle NFC
+    nfc();
+    if (vitoria == true){
+      estado = 3;
+      tempo += 25;
+    }
+  }
+
+if (estado == 3){  //Puzzle Decode
+    decode();
+    if (vitoria == true){
+      estado = 3;
+      tempo += 25;
+    }
+  }
+
+if (estado == 4){  //Puzzle Fio
+    fio();
+    if (vitoria == true){
+      estado = 3;
+      tempo += 25;
+    }
+  }
+
+if (estado == 5){  //Puzzle Potenciometro
+    Potenciometro();
+    if (vitoria == true){
+      estado = 3;
+      tempo += 25;
+    }
+  }
+
+if (estado == 6){  //Vitoria
+    lcd.print("Parabens but");
+    if (senha == '1'){
+      estado = 0;
+    }
+  }
+
+// Derrotas 
+if (erros >= 3 && dificuldade == 1){  //Derrota facil
+  tempo = 0;
+  lcd.print("derrota humilhante but");
+  if (senha == '1'){
+      estado = 0;
+    }
+  }
+
+if (erros >= 2 && dificuldade == 2){  //Derrota dificil
+  tempo = 0;
+  lcd.print("derrota");
+  if (senha == '1'){
+      estado = 0;
+    }
+  }
+}
+
