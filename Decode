@@ -1,0 +1,19 @@
+void decode() {
+  if (confirma == true) {
+    lcd.setCursor(0, 1);
+    
+    if (senha == binario) {
+      lcd.print("Parabens!        ");
+      vitoria = true;
+    } else {
+      lcd.print("Incorreto!       ");
+      tempo -=10;
+      
+      senha = "";
+      confirma = false;
+      
+      lcd.setCursor(0, 1);
+      lcd.print("                "); 
+    }
+  }
+}
