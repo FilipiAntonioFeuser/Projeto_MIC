@@ -1,32 +1,26 @@
+
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <stdint.h>
 
-
-// CONFIGURACAO DOS PINOS
-
+// CONFIGURACAO DO LEITOR RFID
 
 #define RFID_SS   10
 #define RFID_RST  A0
 
 MFRC522 leitor(RFID_SS, RFID_RST);
 
-LiquidCrystal_I2C lcd(0x26, 16, 2);
+
+// VARIAVEIS GLOBAIS DO PROJETO
+
+extern bool vitoria;
+extern int erros;
+extern LiquidCrystal_I2C lcd;
 
 
-
-// VARIAVEIS GLOBAIS
-
-
-bool vitoria = false;
-bool erro = false;
-
-
-
-// CARTAO AUTORIZADO
-
+// UID DO CARTAO AUTORIZADO
 
 const uint8_t UID_CORRETO[] = {
   0xCB, 0x8F, 0x70, 0x26
@@ -35,24 +29,20 @@ const uint8_t UID_CORRETO[] = {
 const uint8_t TAM_UID_CORRETO = sizeof(UID_CORRETO);
 
 
-
 // MODULO NFC
 
+void nfc() {
 
-void NFC() {
-
-  // Inicializacao executada apenas uma vez
+  // Inicializa somente na primeira chamada
   static bool inicializado = false;
 
   if (!inicializado) {
 
     lcd.init();
     lcd.backlight();
+    lcd.clear();
 
     lcd.setCursor(0, 0);
-    lcd.print("Sistema Escape");
-
-    lcd.setCursor(0, 1);
     lcd.print("Aproxime cartao");
 
     SPI.begin();
@@ -61,46 +51,37 @@ void NFC() {
     inicializado = true;
   }
 
-
   // Verifica se existe um novo cartao
   if (!leitor.PICC_IsNewCardPresent()) {
     return;
   }
 
-  // Realiza a leitura do cartao
+  // Realiza a leitura
   if (!leitor.PICC_ReadCardSerial()) {
     return;
   }
 
+  // Verifica o UID
+  bool autorizado = (leitor.uid.size == TAM_UID_CORRETO);
 
-  // Verifica se o UID corresponde ao autorizado
-  bool autorizado = true;
-
-  if (leitor.uid.size != TAM_UID_CORRETO) {
-
-    autorizado = false;
-
-  }
-
-  else {
+  if (autorizado) {
 
     for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
 
       if (leitor.uid.uidByte[i] != UID_CORRETO[i]) {
 
         autorizado = false;
+        break;
       }
     }
   }
 
-
-  // Define o resultado e atualiza o LCD
+  // Define o resultado
   lcd.clear();
 
   if (autorizado) {
 
     vitoria = true;
-    erro = false;
 
     lcd.setCursor(0, 0);
     lcd.print("CARTAO CORRETO");
@@ -113,15 +94,14 @@ void NFC() {
   else {
 
     vitoria = false;
-    erro = true;
+    erros++;
 
     lcd.setCursor(0, 0);
     lcd.print("CARTAO INCORRETO");
 
     lcd.setCursor(0, 1);
-    lcd.print("Tente novamente");
+    lcd.print("Erro +1");
   }
-
 
   // Finaliza comunicacao com o cartao
   leitor.PICC_HaltA();
