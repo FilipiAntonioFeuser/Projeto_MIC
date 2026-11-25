@@ -92,7 +92,7 @@ void iniciarFasePotenciometro() {
 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Alvo:101b 7=BOOM"); // ALTERE esta linha (avisa que 7 explode)
+  lcd.print("101b   7=:("); // ALTERE esta linha (avisa que 7 explode)
   lcd.setCursor(0, 1);
   lcd.print("Faixa: -/7 (1s)");
 }
