@@ -5,12 +5,14 @@
 #include <MFRC522.h>
 #include <stdint.h>
 
+
 // CONFIGURACAO DO LEITOR RFID
 
-#define RFID_SS   10
-#define RFID_RST  A0
 
-MFRC522 leitor(RFID_SS, RFID_RST);
+#define RFID_SS 10
+
+// 0xFF indica que nao existe GPIO conectado ao RST
+MFRC522 leitor(RFID_SS, 0xFF);
 
 
 // VARIAVEIS GLOBAIS DO PROJETO
@@ -20,7 +22,8 @@ extern int erros;
 extern LiquidCrystal_I2C lcd;
 
 
-// UID DO CARTAO AUTORIZADO
+// CARTAO AUTORIZADO
+
 
 const uint8_t UID_CORRETO[] = {
   0xCB, 0x8F, 0x70, 0x26
@@ -29,21 +32,18 @@ const uint8_t UID_CORRETO[] = {
 const uint8_t TAM_UID_CORRETO = sizeof(UID_CORRETO);
 
 
+
 // MODULO NFC
+
 
 void nfc() {
 
-  // Inicializa somente na primeira chamada
+  // Controle de inicializacao
   static bool inicializado = false;
+  static bool faseAtiva = false;
 
+  // Inicializa o leitor apenas uma vez
   if (!inicializado) {
-
-    lcd.init();
-    lcd.backlight();
-    lcd.clear();
-
-    lcd.setCursor(0, 0);
-    lcd.print("Aproxime cartao");
 
     SPI.begin();
     leitor.PCD_Init();
@@ -51,19 +51,32 @@ void nfc() {
     inicializado = true;
   }
 
+  // Identifica a entrada na fase
+  if (!faseAtiva) {
+
+    vitoria = false;
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Aproxime cartao");
+
+    faseAtiva = true;
+  }
+
   // Verifica se existe um novo cartao
   if (!leitor.PICC_IsNewCardPresent()) {
     return;
   }
 
-  // Realiza a leitura
+  // Realiza a leitura do cartao
   if (!leitor.PICC_ReadCardSerial()) {
     return;
   }
 
-  // Verifica o UID
+  // Verifica se o tamanho do UID corresponde
   bool autorizado = (leitor.uid.size == TAM_UID_CORRETO);
 
+  // Compara os bytes do UID
   if (autorizado) {
 
     for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
@@ -82,6 +95,7 @@ void nfc() {
   if (autorizado) {
 
     vitoria = true;
+    faseAtiva = false;
 
     lcd.setCursor(0, 0);
     lcd.print("CARTAO CORRETO");
