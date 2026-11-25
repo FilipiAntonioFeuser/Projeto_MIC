@@ -36,8 +36,8 @@ ISR(PCINT1_vect) {
 
 //Chamar uma vez no setup()
 void configurarFios() {
-  set_bit(DDRB, PB5);   // D13 (LED desarmou) como saída
-  set_bit(DDRB, PB4);   // D12 (LED erro/explodiu) como saída
+  //set_bit(DDRB, PB5);   // D13 (LED desarmou) como saída
+  //set_bit(DDRB, PB4);   // D12 (LED erro/explodiu) como saída
 
   clr_bit(DDRC, PC0);   // A0, A1, A2 como entrada
   clr_bit(DDRC, PC1);
@@ -62,8 +62,8 @@ void iniciarFaseFios() {
   set_bit(PCICR, PCIE1);  // ativa interrupção da porta C
   sei();
 
-  clr_bit(PORTB, PB5);    // apaga LEDs da fase
-  clr_bit(PORTB, PB4);
+  //clr_bit(PORTB, PB5);    // apaga LEDs da fase
+  //clr_bit(PORTB, PB4);
 
   // Escreve a dica uma única vez ao entrar na fase
   lcd.clear();
@@ -99,14 +99,14 @@ void atualizarFios() {
     // Verifica cada fio errado separadamente (caso dois sejam cortados juntos)
     if (copia & (1 << 1)) {
       erros++;
-      set_bit(PORTB, PB4);
+      //set_bit(PORTB, PB4);
       lcd.setCursor(0, 1);             
       lcd.print("Fio A1: ERRO +1 "); 
       Serial.println("Fio errado A1! Erro +1");
     }
     if (copia & (1 << 2)) {
       erros++;
-      set_bit(PORTB, PB4);
+      //set_bit(PORTB, PB4);
       lcd.setCursor(0, 1);
       lcd.print("Fio A2: ERRO +1 ");
       Serial.println("Fio errado A2! Erro +1");
@@ -115,7 +115,7 @@ void atualizarFios() {
     // Verifica fio certo
     if (copia & FIO_CERTO) {
       vitoria = true;
-      set_bit(PORTB, PB5);
+      //set_bit(PORTB, PB5);
       clr_bit(PCICR, PCIE1);  // desativa interrupção da porta C depois de vencer a fase
       Serial.println("Fio certo A0! Fase concluida.");
     }
