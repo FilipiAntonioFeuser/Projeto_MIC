@@ -68,7 +68,7 @@ void iniciarFaseFios() {
   // Escreve a dica uma única vez ao entrar na fase
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("O primeiro sera");
+  lcd.print("O 1o é");
   lcd.setCursor(0, 1);
   lcd.print("a salvacao.");
 
