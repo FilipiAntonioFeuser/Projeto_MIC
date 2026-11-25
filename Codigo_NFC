@@ -58,7 +58,7 @@ void nfc() {
 
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Aproxime cartao");
+    lcd.print("Passe cartao");
 
     faseAtiva = true;
   }
