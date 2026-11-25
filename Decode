@@ -1,34 +1,51 @@
-// Variaveis Globais
-long codigo;
+extern LiquidCrystal_I2C lcd;
+
+long codigo = 0;
 String binario = "";
 String hexadecimal = "";
 String senha = "";
 bool confirma = false;
 
-void setup(){
-// Gera numero a ser decodificado
-randomSeed(analogRead(A0)); 
-codigo = random(1, 101);
-binario = String(codigo, BIN);
-hexadecimal = String(codigo, HEX);
-}
-
 void decode() {
-  if (confirma == true) {
+  static bool faseAtiva = false;
+  static unsigned long ultimaChamada = 0;
+
+  // Inicializa sempre que entrar na fase (inclusive ao reiniciar o jogo)
+  if (!faseAtiva || (millis() - ultimaChamada > 500)) {
+    vitoria = false;
+    senha = "";
+    confirma = false;
+
+    codigo = random(1, 64); // 1 a 63 (até 6 bits, cabe com folga no LCD)
+    binario = String(codigo, BIN);
+    hexadecimal = String(codigo, HEX);
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Bin:");
+    lcd.print(codigo);      // fica nas colunas 0..11 sem bater no timer (colunas 12..15)
+
+    faseAtiva = true;
+  }
+  ultimaChamada = millis();
+
+  if (confirma) {
     lcd.setCursor(0, 1);
-    
+
     if (senha == binario) {
-      lcd.print("Parabens!        ");
+      lcd.print("Parabens!       ");
       vitoria = true;
-    } else {
-      lcd.print("Incorreto!       ");
-      tempo -=10;
-      
+      faseAtiva = false;
       senha = "";
       confirma = false;
-      
+    } else {
+      lcd.print("Incorreto! -10s ");
+      tempo = (tempo > 10) ? (tempo - 10) : 0;
+      senha = "";
+      confirma = false;
+      delay(800);
       lcd.setCursor(0, 1);
-      lcd.print("                "); 
+      lcd.print("                ");
     }
   }
 }
