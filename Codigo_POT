@@ -60,8 +60,8 @@ int lerPotSuave() {
 
 // Chamar uma vez no setup() principal
 void configurarPotenciometro() {
-  set_bit(DDRB, PB5);   // D13 (LED de fase concluída) como saída
-  set_bit(DDRB, PB4);   // ADICIONE: D12 (LED de erro) como saída
+  //set_bit(DDRB, PB5);   // D13 (LED de fase concluída) como saída
+  //set_bit(DDRB, PB4);   // ADICIONE: D12 (LED de erro) como saída
   clr_bit(DDRC, PC3);   // garante A3 como entrada
 
   // Configura ADC: referência AVcc, canal A3, prescaler 128 (125 kHz)
@@ -87,8 +87,8 @@ void iniciarFasePotenciometro() {
   faixaAnterior = -1;
   faixaAtual = -1;
 
-  clr_bit(PORTB, PB5);  // apaga LED da placa ao iniciar a fase
-  clr_bit(PORTB, PB4);  // ADICIONE: apaga LED de erro ao iniciar
+  //clr_bit(PORTB, PB5);  // apaga LED da placa ao iniciar a fase
+  //clr_bit(PORTB, PB4);  // ADICIONE: apaga LED de erro ao iniciar
 
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -128,7 +128,7 @@ void atualizarPotenciometro() {
     if (!emPerigo) {
       emPerigo = true;
       erros++;
-      set_bit(PORTB, PB4);
+      //set_bit(PORTB, PB4);
       lcd.setCursor(0, 1);
       lcd.print("SOBRECARGA! +1  ");
       Serial.println("Sobrecarga na faixa 7! Erro +1");
@@ -147,7 +147,7 @@ void atualizarPotenciometro() {
       lcd.print("Travando... 1s  ");
     } else if (agora() - inicioAcerto >= TEMPO_SEGURAR) {
       vitoria = true;
-      set_bit(PORTB, PB5);
+      //set_bit(PORTB, PB5);
       Serial.println("Potenciometro calibrado! Fase concluida.");
     }
   } else {
