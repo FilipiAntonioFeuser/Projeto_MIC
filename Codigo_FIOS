@@ -100,11 +100,15 @@ void atualizarFios() {
     if (copia & (1 << 1)) {
       erros++;
       set_bit(PORTB, PB4);
+      lcd.setCursor(0, 1);             
+      lcd.print("Fio A1: ERRO +1 "); 
       Serial.println("Fio errado A1! Erro +1");
     }
     if (copia & (1 << 2)) {
       erros++;
       set_bit(PORTB, PB4);
+      lcd.setCursor(0, 1);
+      lcd.print("Fio A2: ERRO +1 ");
       Serial.println("Fio errado A2! Erro +1");
     }
 
