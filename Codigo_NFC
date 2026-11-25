@@ -4,7 +4,9 @@
 #include <MFRC522.h>
 #include <stdint.h>
 
-// 1. CONFIGURACAO DOS PINOS
+
+// CONFIGURACAO DOS PINOS
+
 
 #define RFID_SS   10
 #define RFID_RST  A0
@@ -14,13 +16,17 @@ MFRC522 leitor(RFID_SS, RFID_RST);
 LiquidCrystal_I2C lcd(0x26, 16, 2);
 
 
-// 2. VARIAVEIS GLOBAIS
+
+// VARIAVEIS GLOBAIS
+
 
 bool vitoria = false;
 bool erro = false;
 
 
-// 3. CARTAO AUTORIZADO
+
+// CARTAO AUTORIZADO
+
 
 const uint8_t UID_CORRETO[] = {
   0xCB, 0x8F, 0x70, 0x26
@@ -29,86 +35,95 @@ const uint8_t UID_CORRETO[] = {
 const uint8_t TAM_UID_CORRETO = sizeof(UID_CORRETO);
 
 
-// 4. VALIDACAO DO CARTAO
 
-bool cartao_correto() {
+// MODULO NFC
 
-  if (leitor.uid.size != TAM_UID_CORRETO) {
-    return false;
+
+void NFC() {
+
+  // Inicializacao executada apenas uma vez
+  static bool inicializado = false;
+
+  if (!inicializado) {
+
+    lcd.init();
+    lcd.backlight();
+
+    lcd.setCursor(0, 0);
+    lcd.print("Sistema Escape");
+
+    lcd.setCursor(0, 1);
+    lcd.print("Aproxime cartao");
+
+    SPI.begin();
+    leitor.PCD_Init();
+
+    inicializado = true;
   }
 
-  for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
 
-    if (leitor.uid.uidByte[i] != UID_CORRETO[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-// 5. SETUP
-
-void setup() {
-
-  // Inicializa LCD
-  lcd.init();
-  lcd.backlight();
-
-  lcd.setCursor(0, 0);
-  lcd.print("Sistema Escape");
-  lcd.setCursor(0, 1);
-  lcd.print("Aproxime cartao");
-
-  // Inicializa leitor RFID
-  SPI.begin();
-  leitor.PCD_Init();
-}
-
-
-// 6. LOOP PRINCIPAL
-
-void loop() {
-
-  // Verifica se existe cartao
+  // Verifica se existe um novo cartao
   if (!leitor.PICC_IsNewCardPresent()) {
     return;
   }
 
-  // Realiza leitura
+  // Realiza a leitura do cartao
   if (!leitor.PICC_ReadCardSerial()) {
     return;
   }
 
-  // Verifica se o cartao esta correto
-  if (cartao_correto()) {
+
+  // Verifica se o UID corresponde ao autorizado
+  bool autorizado = true;
+
+  if (leitor.uid.size != TAM_UID_CORRETO) {
+
+    autorizado = false;
+
+  }
+
+  else {
+
+    for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
+
+      if (leitor.uid.uidByte[i] != UID_CORRETO[i]) {
+
+        autorizado = false;
+      }
+    }
+  }
+
+
+  // Define o resultado e atualiza o LCD
+  lcd.clear();
+
+  if (autorizado) {
 
     vitoria = true;
     erro = false;
 
-    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("CARTAO CORRETO");
 
     lcd.setCursor(0, 1);
     lcd.print("Acesso liberado");
 
-  } else {
+  }
+
+  else {
 
     vitoria = false;
     erro = true;
 
-    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("CARTAO INCORRETO");
 
     lcd.setCursor(0, 1);
     lcd.print("Tente novamente");
-
   }
 
-  // Finaliza comunicacao com cartao
+
+  // Finaliza comunicacao com o cartao
   leitor.PICC_HaltA();
   leitor.PCD_StopCrypto1();
 
