@@ -29,6 +29,7 @@ void mostrarTelaUnica(int idTela, const char* linha0, const char* linha1) {
 
 void menu() {
   mostrarTelaUnica(0, "ESCAPE ROOM", "1 - Iniciar");
+}
 
 void maquina_estados(){
 if (estado == 0){  // Menu principal
