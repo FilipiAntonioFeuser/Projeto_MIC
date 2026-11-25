@@ -63,12 +63,12 @@ O projeto utiliza os seguintes componentes:
 | LCD I²C | SDA/A4 e SCL/A5, endereço `0x26` |
 | RC522 — SS/SDA | D10 |
 | RC522 — SPI | SCK/D13, MOSI/D11 e MISO/D12 |
-| RC522 — reset | A0 |
+| RC522 — reset | 3.3V |
 | Potenciômetro | A3 |
 | Enigma dos fios | A0, A1 e A2 |
 | LEDs dos módulos Fios/Potenciômetro | D13 e D12 |
 
-**A pinagem ainda precisa ser ajustada para o uso simultâneo de todos os módulos.** Nos códigos atuais, o RC522 usa D12 e D13 para SPI, mas esses mesmos pinos também aparecem como saídas dos LEDs dos módulos Fios e Potenciômetro. Além disso, A0 está sendo usado tanto pelo reset do RC522 quanto pelo enigma dos fios. Antes da montagem final, é necessário escolher uma pinagem sem conflitos e atualizar os códigos e o circuito.
+**A pinagem ainda precisa ser ajustada para o uso simultâneo de todos os módulos.** Nos códigos atuais, o RC522 usa D12 e D13 para SPI, mas esses mesmos pinos também aparecem como saídas dos LEDs dos módulos Fios e Potenciômetro. 
 
 ## Como os módulos se comunicam
 
