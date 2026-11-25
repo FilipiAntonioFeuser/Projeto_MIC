@@ -1,24 +1,26 @@
-
-#include <avr/io.h>
-#include <stdint.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <stdint.h>
 
 // 1. CONFIGURACAO DOS PINOS
 
-// RC522
 #define RFID_SS   10
 #define RFID_RST  A0
 
 MFRC522 leitor(RFID_SS, RFID_RST);
 
-// LCD I2C
 LiquidCrystal_I2C lcd(0x26, 16, 2);
 
 
-// 2. CADASTRO DO CARTAO AUTORIZADO
+// 2. VARIAVEIS GLOBAIS
+
+bool vitoria = false;
+bool erro = false;
+
+
+// 3. CARTAO AUTORIZADO
 
 const uint8_t UID_CORRETO[] = {
   0xCB, 0x8F, 0x70, 0x26
@@ -27,82 +29,17 @@ const uint8_t UID_CORRETO[] = {
 const uint8_t TAM_UID_CORRETO = sizeof(UID_CORRETO);
 
 
-// 3. CONFIGURACAO DA UART
-
-void uart_iniciar() {
-
-  UBRR0H = 0;
-  UBRR0L = 103;
-
-  UCSR0A = 0;
-
-  UCSR0B = (1 << TXEN0);
-
-  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
-}
-
-
-void uart_enviar(char caractere) {
-
-  while (!(UCSR0A & (1 << UDRE0)));
-
-  UDR0 = caractere;
-}
-
-
-void uart_texto(const char *texto) {
-
-  while (*texto) {
-
-    uart_enviar(*texto);
-    texto++;
-  }
-}
-
-
-void uart_hex(uint8_t valor) {
-
-  const char digitos[] = "0123456789ABCDEF";
-
-  uart_enviar(digitos[(valor >> 4) & 0x0F]);
-  uart_enviar(digitos[valor & 0x0F]);
-}
-
-
-// 4. EXIBICAO DO UID
-
-void mostrar_uid() {
-
-  uart_texto("\r\nCartao detectado!\r\n");
-  uart_texto("UID: ");
-
-  for (uint8_t i = 0; i < leitor.uid.size; i++) {
-
-    uart_hex(leitor.uid.uidByte[i]);
-    uart_enviar(' ');
-  }
-
-  uart_texto("\r\n");
-
-  uart_texto("Tamanho: ");
-  uart_enviar('0' + leitor.uid.size);
-  uart_texto(" bytes\r\n");
-}
-
-
-// 5. VALIDACAO DO CARTAO
+// 4. VALIDACAO DO CARTAO
 
 bool cartao_correto() {
 
   if (leitor.uid.size != TAM_UID_CORRETO) {
-
     return false;
   }
 
   for (uint8_t i = 0; i < TAM_UID_CORRETO; i++) {
 
     if (leitor.uid.uidByte[i] != UID_CORRETO[i]) {
-
       return false;
     }
   }
@@ -111,116 +48,68 @@ bool cartao_correto() {
 }
 
 
-// 6. EXIBICAO DO RESULTADO NO LCD
-
-void mostrar_resultado(bool autorizado) {
-
-  lcd.clear();
-
-  if (autorizado) {
-
-    lcd.setCursor(0, 0);
-    lcd.print("CARTAO CORRETO");
-
-    uart_texto("Acesso autorizado!\r\n");
-
-  }
-
-  else {
-
-    lcd.setCursor(0, 0);
-    lcd.print("CARTAO INCORRETO");
-
-    uart_texto("Acesso negado!\r\n");
-
-  }
-
-  // Mostra o UID na segunda linha
-  lcd.setCursor(0, 1);
-
-  for (uint8_t i = 0; i < leitor.uid.size && i < 4; i++) {
-
-    if (leitor.uid.uidByte[i] < 0x10) {
-      lcd.print('0');
-    }
-
-    lcd.print(leitor.uid.uidByte[i], HEX);
-
-    if (i < 3 && i + 1 < leitor.uid.size) {
-      lcd.print(' ');
-    }
-  }
-}
-
-
-// 7. SETUP
+// 5. SETUP
 
 void setup() {
-
-  // Inicializa comunicacao UART
-  uart_iniciar();
-
-  uart_texto("\r\nSISTEMA ESCAPE ROOM\r\n");
 
   // Inicializa LCD
   lcd.init();
   lcd.backlight();
 
   lcd.setCursor(0, 0);
-  lcd.print("Sistema Escape Room");
+  lcd.print("Sistema Escape");
   lcd.setCursor(0, 1);
   lcd.print("Aproxime cartao");
 
-  // Inicializa comunicacao SPI
-  SPI.begin();
-
   // Inicializa leitor RFID
+  SPI.begin();
   leitor.PCD_Init();
-
-  uart_texto("Leitor RC522 inicializado!\r\n");
-  uart_texto("Aguardando cartao...\r\n");
 }
 
 
-// 8. LOOP PRINCIPAL
+// 6. LOOP PRINCIPAL
 
 void loop() {
 
-  // Verifica se existe um novo cartao
+  // Verifica se existe cartao
   if (!leitor.PICC_IsNewCardPresent()) {
-
     return;
   }
 
-  // Realiza a leitura do UID
+  // Realiza leitura
   if (!leitor.PICC_ReadCardSerial()) {
-
     return;
   }
 
-  // Exibe o UID para depuracao
-  mostrar_uid();
-
-  // Verifica se o cartao esta autorizado
+  // Verifica se o cartao esta correto
   if (cartao_correto()) {
 
-    mostrar_resultado(true);
+    vitoria = true;
+    erro = false;
 
-    uart_texto("CARTAO CORRETO!\r\n");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("CARTAO CORRETO");
+
+    lcd.setCursor(0, 1);
+    lcd.print("Acesso liberado");
+
+  } else {
+
+    vitoria = false;
+    erro = true;
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("CARTAO INCORRETO");
+
+    lcd.setCursor(0, 1);
+    lcd.print("Tente novamente");
 
   }
 
-  else {
-
-    mostrar_resultado(false);
-
-    uart_texto("CARTAO INCORRETO!\r\n");
-
-  }
-
-  // Encerra comunicacao com o cartao
+  // Finaliza comunicacao com cartao
   leitor.PICC_HaltA();
-
   leitor.PCD_StopCrypto1();
 
 }
